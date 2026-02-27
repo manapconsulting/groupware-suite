@@ -1,0 +1,80 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+**/mailadmin/backend/mailadmin
+**/groupware/groupware
+**/groupware/mailadmin
+**/webmail/backend/webmail
+botserver/bin/worker
+botserver/worker
+dexeq/dexeq_server
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Go workspace file
+go.work
+
+# Dependency directories
+node_modules/
+vendor/
+
+# Build outputs
+dist/
+build/
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Backups
+backups/
+*.backup
+*.bak
+
+# System
+swapfile
+lost+found/
+
+# Container related
+containerd/
+
+# Source bundles
+source-bundles/
+
+# Private TODO
+TODO.md

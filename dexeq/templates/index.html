@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="{{.Lang}}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{index .T "site_title"}}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #030712;
+            color: #f3f4f6;
+            overflow-x: hidden;
+        }
+
+        .glass {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .neon-text {
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .gradient-border {
+            border: 1px solid;
+            border-image-source: linear-gradient(135deg, #3b82f6, #10b981);
+            border-image-slice: 1;
+        }
+
+        .dex-card:hover {
+            transform: translateY(-5px);
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px -10px rgba(59, 130, 246, 0.3);
+        }
+
+        .soon-badge {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .lang-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .lang-dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            min-width: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            z-index: 100;
+            margin-top: 8px;
+        }
+
+        .lang-dropdown-content.show {
+            display: block;
+        }
+
+        .lang-dropdown-content a {
+            display: block;
+            padding: 10px 16px;
+            color: #9ca3af;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .lang-dropdown-content a:hover {
+            background: rgba(59, 130, 246, 0.2);
+            color: white;
+        }
+
+        .lang-dropdown-content a.active {
+            background: rgba(59, 130, 246, 0.3);
+            color: #3b82f6;
+        }
+
+        /* RTL support for Arabic */
+        html[lang="ar"] {
+            direction: rtl;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 transition-all duration-300 py-4 px-6 lg:px-12 glass border-b border-white/5">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <!-- Logo Placement -->
+                <div class="text-2xl font-bold tracking-tighter">
+                    <span class="text-blue-500">DEX</span><span class="text-white">eq</span><span class="text-gray-500 text-lg">.xyz</span>
+                </div>
+            </div>
+            <div class="hidden md:flex gap-8 text-sm font-medium text-gray-400">
+                <a href="#platforms" class="hover:text-white transition-colors">{{index .T "nav_platforms"}}</a>
+                <a href="#features" class="hover:text-white transition-colors">{{index .T "nav_features"}}</a>
+                <a href="#waitlist" class="hover:text-white transition-colors">{{index .T "nav_waitlist"}}</a>
+            </div>
+            <div class="flex items-center gap-4">
+                <!-- Language Selector -->
+                <div class="lang-dropdown">
+                    <button onclick="toggleLangDropdown(event)" class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm">
+                        <i class="fas fa-globe"></i>
+                        <span class="hidden sm:inline">{{index .T "select_language"}}</span>
+                        <i class="fas fa-chevron-down text-xs"></i>
+                    </button>
+                    <div id="lang-dropdown" class="lang-dropdown-content">
+                        {{range .Languages}}
+                        <a href="/api/set-language?lang={{.Code}}" class="{{if eq $.Lang .Code}}active{{end}}">
+                            {{.NativeName}} ({{.Name}})
+                        </a>
+                        {{end}}
+                    </div>
+                </div>
+                <button onclick="scrollToWaitlist()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full text-sm font-semibold transition-all">
+                    {{index .T "nav_early_access"}}
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 px-6 overflow-hidden">
+        <!-- Background Accents -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none">
+            <div class="absolute top-24 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px]"></div>
+            <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-600/10 rounded-full blur-[120px]"></div>
+        </div>
+
+        <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative z-10">
+            <div>
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold mb-6 tracking-wide uppercase">
+                    <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                    {{index .T "hero_badge"}}
+                </div>
+                <h1 class="text-5xl lg:text-7xl font-bold leading-tight mb-6">
+                    {{index .T "hero_title_1"}} <br/>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 neon-text">{{index .T "hero_title_2"}}</span>
+                </h1>
+                <p class="text-gray-400 text-lg mb-8 max-w-xl leading-relaxed">
+                    {{index .T "hero_description"}}
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button onclick="scrollToWaitlist()" class="px-8 py-4 bg-white text-black font-bold rounded-xl hover:bg-blue-500 hover:text-white transition-all transform hover:-translate-y-1">
+                        {{index .T "hero_btn_waitlist"}}
+                    </button>
+                    <button class="px-8 py-4 glass text-white font-bold rounded-xl hover:bg-white/10 transition-all">
+                        {{index .T "hero_btn_how"}}
+                    </button>
+                </div>
+            </div>
+
+            <div class="relative flex justify-center items-center">
+                <!-- Floating Elements representing the DEXeq ecosystem -->
+                <div class="relative w-full aspect-square max-w-[500px] animate-float">
+                    <div class="absolute inset-0 bg-gradient-to-tr from-blue-500/20 to-emerald-500/20 rounded-3xl border border-white/10 glass shadow-2xl overflow-hidden">
+                        <!-- Mock Trading Interface -->
+                        <div class="p-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <div class="h-4 w-24 bg-white/10 rounded"></div>
+                                <div class="h-4 w-12 bg-emerald-500/20 rounded"></div>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="h-32 bg-white/5 rounded-xl border border-white/10"></div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="h-20 bg-white/5 rounded-xl border border-white/10"></div>
+                                    <div class="h-20 bg-white/5 rounded-xl border border-white/10"></div>
+                                </div>
+                                <div class="h-12 bg-blue-600 rounded-xl"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Orbiting DEX Logos (Placeholders) -->
+                    <div class="absolute -top-6 -right-6 w-20 h-20 glass rounded-2xl flex items-center justify-center border border-white/20 shadow-xl">
+                        <span class="font-bold text-xs">NADO</span>
+                    </div>
+                    <div class="absolute top-1/2 -left-10 w-20 h-20 glass rounded-2xl flex items-center justify-center border border-white/20 shadow-xl">
+                        <span class="font-bold text-xs text-emerald-400">PARA</span>
+                    </div>
+                    <div class="absolute -bottom-6 right-1/4 w-20 h-20 glass rounded-2xl flex items-center justify-center border border-white/20 shadow-xl">
+                        <span class="font-bold text-xs text-blue-400">VARI</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trusted Platforms Section -->
+    <section id="platforms" class="py-20 bg-black/40 border-y border-white/5">
+        <div class="max-w-7xl mx-auto px-6 text-center">
+            <p class="text-sm font-semibold text-gray-500 uppercase tracking-[0.3em] mb-12">{{index .T "platforms_title"}}</p>
+            <div class="flex flex-wrap justify-center items-center gap-12 md:gap-20 opacity-60">
+                <span class="text-2xl font-bold tracking-tighter">NADO</span>
+                <span class="text-2xl font-bold tracking-tighter">VARIATIONAL</span>
+                <span class="text-2xl font-bold tracking-tighter">PARADEX</span>
+                <span class="text-2xl font-bold tracking-tighter">BACKPACK</span>
+                <span class="text-2xl font-bold tracking-tighter">LIGHTER</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-24 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-20">
+                <h2 class="text-4xl font-bold mb-4">{{index .T "features_title"}}</h2>
+                <p class="text-gray-400">{{index .T "features_subtitle"}}</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="p-8 rounded-3xl glass dex-card">
+                    <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center text-blue-400 mb-6">
+                        <i class="fas fa-layer-group text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">{{index .T "feature1_title"}}</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">{{index .T "feature1_desc"}}</p>
+                </div>
+                <!-- Feature 2 -->
+                <div class="p-8 rounded-3xl glass dex-card border-emerald-500/20">
+                    <div class="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400 mb-6">
+                        <i class="fas fa-robot text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">{{index .T "feature2_title"}}</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">{{index .T "feature2_desc"}}</p>
+                </div>
+                <!-- Feature 3 -->
+                <div class="p-8 rounded-3xl glass dex-card">
+                    <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center text-purple-400 mb-6">
+                        <i class="fas fa-bolt text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">{{index .T "feature3_title"}}</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">{{index .T "feature3_desc"}}</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Waitlist Section -->
+    <section id="waitlist" class="py-24 px-6 relative">
+        <div class="max-w-4xl mx-auto glass p-12 rounded-[40px] text-center border-2 border-blue-500/20 relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-8 opacity-10">
+                <i class="fas fa-paper-plane text-9xl -rotate-12"></i>
+            </div>
+
+            <h2 class="text-4xl font-bold mb-4">{{index .T "waitlist_title"}}</h2>
+            <p class="text-gray-400 mb-10 text-lg">{{index .T "waitlist_subtitle"}}</p>
+
+            <button onclick="openWaitlistModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-10 py-4 rounded-2xl transition-all shadow-lg shadow-blue-600/20">
+                {{index .T "waitlist_button"}}
+            </button>
+            <p class="mt-6 text-xs text-gray-500 italic">{{index .T "waitlist_privacy"}}</p>
+        </div>
+    </section>
+
+    <!-- Waitlist Modal -->
+    <div id="waitlist-modal" class="fixed inset-0 z-[200] hidden">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeWaitlistModal()"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md mx-4">
+            <div class="glass p-8 rounded-3xl border border-white/20 relative">
+                <button onclick="closeWaitlistModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+
+                <h3 class="text-2xl font-bold mb-6 text-center">{{index .T "waitlist_modal_title"}}</h3>
+
+                <form id="waitlist-form" class="space-y-4">
+                    <!-- Country (Required) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">{{index .T "waitlist_country"}} *</label>
+                        <select id="country-input" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition-all text-white">
+                            <option value="">{{index .T "waitlist_country_placeholder"}}</option>
+                        </select>
+                    </div>
+
+                    <!-- Full Name (Optional) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">{{index .T "waitlist_fullname"}}</label>
+                        <input type="text" id="fullname-input" placeholder="{{index .T "waitlist_fullname_placeholder"}}" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition-all text-white">
+                    </div>
+
+                    <!-- Email (Required) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">{{index .T "waitlist_placeholder"}} *</label>
+                        <input type="email" id="email-input" required placeholder="email@example.com" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition-all text-white">
+                    </div>
+
+                    <!-- Platforms (Optional) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">{{index .T "waitlist_platforms"}}</label>
+                        <input type="text" id="platforms-input" placeholder="{{index .T "waitlist_platforms_placeholder"}}" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition-all text-white">
+                    </div>
+
+                    <p id="form-message" class="text-xs text-gray-500 italic text-center">{{index .T "waitlist_privacy"}}</p>
+
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-4 rounded-xl transition-all shadow-lg shadow-blue-600/20">
+                        {{index .T "waitlist_button"}}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer with SOON Badge -->
+    <footer class="py-12 px-6 border-t border-white/5 relative">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="flex items-center gap-6">
+                <div class="text-xl font-bold tracking-tighter">
+                    <span class="text-blue-500">DEX</span>eq.xyz
+                </div>
+                <div class="text-gray-500 text-sm">&copy; 2026 {{index .T "footer_rights"}}</div>
+            </div>
+
+            <!-- Mobile App Vibe -->
+            <div class="flex items-center gap-6">
+                <div class="flex gap-3 text-gray-500">
+                    <a href="https://x.com/Dexeq_xyz" target="_blank" rel="noopener"><i class="fab fa-twitter text-xl hover:text-white cursor-pointer transition-colors"></i></a>
+                    <i class="fab fa-discord text-xl hover:text-white cursor-pointer transition-colors"></i>
+                    <a href="https://t.me/DEXeq_xyz" target="_blank" rel="noopener"><i class="fab fa-telegram text-xl hover:text-white cursor-pointer transition-colors"></i></a>
+                </div>
+            </div>
+        </div>
+
+    </footer>
+
+    <script>
+        const currentLang = "{{.Lang}}";
+        const translations = {
+            waitlist_success: "{{index .T "waitlist_success"}}",
+            waitlist_error_exists: "{{index .T "waitlist_error_exists"}}",
+            waitlist_error_invalid: "{{index .T "waitlist_error_invalid"}}",
+            waitlist_privacy: "{{index .T "waitlist_privacy"}}",
+            waitlist_button: "{{index .T "waitlist_button"}}"
+        };
+
+        // Country list
+        const countries = [
+            "Afghanistan", "Albania", "Algeria", "Argentina", "Australia", "Austria", "Bangladesh", "Belgium", "Brazil", "Bulgaria",
+            "Canada", "Chile", "China", "Colombia", "Croatia", "Czech Republic", "Denmark", "Egypt", "Estonia", "Finland",
+            "France", "Germany", "Greece", "Hong Kong", "Hungary", "India", "Indonesia", "Iran", "Iraq", "Ireland",
+            "Israel", "Italy", "Japan", "Kazakhstan", "Kenya", "Latvia", "Lithuania", "Malaysia", "Mexico", "Morocco",
+            "Netherlands", "New Zealand", "Nigeria", "Norway", "Pakistan", "Peru", "Philippines", "Poland", "Portugal", "Romania",
+            "Russia", "Saudi Arabia", "Serbia", "Singapore", "Slovakia", "Slovenia", "South Africa", "South Korea", "Spain", "Sweden",
+            "Switzerland", "Taiwan", "Thailand", "Turkey", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Vietnam", "Other"
+        ];
+
+        // Populate country dropdown
+        document.addEventListener('DOMContentLoaded', function() {
+            const countrySelect = document.getElementById('country-input');
+            countries.forEach(country => {
+                const option = document.createElement('option');
+                option.value = country;
+                option.textContent = country;
+                countrySelect.appendChild(option);
+            });
+        });
+
+        // Modal functions
+        function openWaitlistModal() {
+            document.getElementById('waitlist-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeWaitlistModal() {
+            document.getElementById('waitlist-modal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeWaitlistModal();
+            }
+        });
+
+        // Language dropdown toggle
+        function toggleLangDropdown(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('lang-dropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('lang-dropdown');
+            const langDropdown = document.querySelector('.lang-dropdown');
+            if (!langDropdown.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        function scrollToWaitlist() {
+            openWaitlistModal();
+        }
+
+        // Simple scroll effect for navbar
+        window.onscroll = function() {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 50) {
+                nav.classList.add('py-3', 'shadow-2xl');
+                nav.classList.remove('py-4');
+            } else {
+                nav.classList.add('py-4');
+                nav.classList.remove('py-3', 'shadow-2xl');
+            }
+        };
+
+        // Waitlist form submission
+        document.getElementById('waitlist-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const emailInput = document.getElementById('email-input');
+            const fullnameInput = document.getElementById('fullname-input');
+            const countryInput = document.getElementById('country-input');
+            const platformsInput = document.getElementById('platforms-input');
+            const messageEl = document.getElementById('form-message');
+            const submitBtn = this.querySelector('button[type="submit"]');
+
+            const email = emailInput.value.trim();
+            const fullName = fullnameInput.value.trim();
+            const country = countryInput.value;
+            const platforms = platformsInput.value.trim();
+
+            if (!email) {
+                messageEl.textContent = translations.waitlist_error_invalid;
+                messageEl.classList.remove('text-gray-500', 'text-green-400');
+                messageEl.classList.add('text-red-400');
+                return;
+            }
+
+            if (!country) {
+                messageEl.textContent = "{{index .T "waitlist_error_country"}}";
+                messageEl.classList.remove('text-gray-500', 'text-green-400');
+                messageEl.classList.add('text-red-400');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = '...';
+
+            try {
+                const response = await fetch('/api/waitlist', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        fullName: fullName,
+                        country: country,
+                        platforms: platforms,
+                        language: currentLang
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    messageEl.textContent = data.message;
+                    messageEl.classList.remove('text-gray-500', 'text-red-400');
+                    messageEl.classList.add('text-green-400');
+                    emailInput.value = '';
+                    fullnameInput.value = '';
+                    countryInput.value = '';
+                    platformsInput.value = '';
+                    // Close modal after 2 seconds
+                    setTimeout(() => {
+                        closeWaitlistModal();
+                        messageEl.textContent = translations.waitlist_privacy;
+                        messageEl.classList.remove('text-green-400');
+                        messageEl.classList.add('text-gray-500');
+                    }, 2000);
+                } else {
+                    messageEl.textContent = data.message;
+                    messageEl.classList.remove('text-gray-500', 'text-green-400');
+                    messageEl.classList.add('text-red-400');
+                }
+            } catch (error) {
+                messageEl.textContent = 'An error occurred. Please try again.';
+                messageEl.classList.remove('text-gray-500', 'text-green-400');
+                messageEl.classList.add('text-red-400');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "{{index .T "waitlist_button"}}";
+            }
+        });
+    </script>
+</body>
+</html>
