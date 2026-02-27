@@ -350,6 +350,22 @@ systemctl status postfix dovecot
   - [Mail Tester](https://www.mail-tester.com/) - Spam score testing
   - [SSL Labs](https://www.ssllabs.com/ssltest/) - SSL configuration testing
 
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+- Read the [Code of Conduct](CODE_OF_CONDUCT.md)
+- Check out [open issues](https://github.com/manapconsulting/groupware-suite/issues)
+- Submit [pull requests](https://github.com/manapconsulting/groupware-suite/pulls)
+
+## Security
+
+For security concerns, please review our [Security Policy](SECURITY.md). To report vulnerabilities privately, email security@manapconsulting.com.
+
 ## License
 
-[Add your license here]
+This project is licensed under the **GNU General Public License v3.0** - see the [LICENSE](LICENSE) file for details.
+
+**Copyright (C) 2024-2026 Manap Consulting**
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
