@@ -1,0 +1,5 @@
+user = mailuser
+password = CHANGE_ME_DB_PASSWORD
+hosts = 127.0.0.1
+dbname = mailserver
+query = SELECT a.destination FROM virtual_aliases a JOIN virtual_domains d ON a.domain_id = d.id WHERE a.source='%s';

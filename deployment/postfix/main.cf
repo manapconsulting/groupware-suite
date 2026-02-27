@@ -1,0 +1,103 @@
+# ============================================================
+# BASIC
+# ============================================================
+compatibility_level = 2
+smtpd_banner = $myhostname ESMTP $mail_name (Debian/GNU)
+biff = no
+append_dot_mydomain = no
+readme_directory = no
+
+myhostname = CHANGE_ME_HOSTNAME
+myorigin = /etc/mailname
+inet_interfaces = all
+inet_protocols = all
+recipient_delimiter = +
+
+# ============================================================
+# NETWORK
+# ============================================================
+mynetworks = 127.0.0.0/8 [::1]/128
+relayhost =
+
+# Virtual setup - mydestination should be minimal
+mydestination = localhost, mail.CHANGE_ME_HOSTNAME
+
+# ============================================================
+# VIRTUAL DOMAINS / USERS
+# ============================================================
+virtual_mailbox_domains = mysql:/etc/postfix/mysql-virtual-domains.cf
+virtual_mailbox_maps = mysql:/etc/postfix/mysql-virtual-users.cf
+virtual_alias_maps = mysql:/etc/postfix/mysql-virtual-aliases.cf
+
+virtual_transport = lmtp:unix:private/dovecot-lmtp
+
+virtual_mailbox_base = /var/mail/vhosts
+virtual_minimum_uid = 5000
+virtual_uid_maps = static:5000
+virtual_gid_maps = static:5000
+
+# ============================================================
+# SASL (DOVECOT)
+# ============================================================
+smtpd_sasl_type = dovecot
+smtpd_sasl_path = private/auth
+smtpd_sasl_auth_enable = yes
+smtpd_sasl_security_options = noanonymous
+broken_sasl_auth_clients = yes
+
+smtpd_recipient_restrictions =
+    permit_mynetworks,
+    permit_sasl_authenticated,
+    reject_unauth_destination
+
+# ============================================================
+# TLS
+# ============================================================
+smtpd_use_tls = yes
+smtp_tls_security_level = may
+smtpd_tls_security_level = may
+smtp_tls_note_starttls_offer = yes
+smtpd_tls_loglevel = 1
+
+smtpd_tls_key_file = /etc/letsencrypt/live/CHANGE_ME_HOSTNAME/privkey.pem
+smtpd_tls_cert_file = /etc/letsencrypt/live/CHANGE_ME_HOSTNAME/fullchain.pem
+
+# SNI (Server Name Indication) - Multi-domain certificates
+tls_server_sni_maps = hash:/etc/postfix/sni_maps
+
+smtpd_tls_received_header = yes
+smtpd_tls_session_cache_timeout = 3600s
+
+tls_random_source = dev:/dev/urandom
+
+smtpd_tls_session_cache_database = btree:${data_directory}/smtpd_scache
+smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
+
+# ============================================================
+# LIMITS
+# ============================================================
+message_size_limit = 150000000
+mailbox_size_limit = 1000000000
+
+# ============================================================
+# SPAM/SECURITY (Optional - configure if needed)
+# ============================================================
+# milter_default_action = accept
+# smtpd_milters = unix:/run/opendkim/opendkim.sock, unix:spamass/spamass.sock
+# non_smtpd_milters = $smtpd_milters
+
+# Sender login checks
+smtpd_sender_restrictions = reject_sender_login_mismatch, permit_sasl_authenticated, permit_mynetworks
+smtpd_sender_login_maps = mysql:/etc/postfix/mysql-sender-login-maps.cf
+
+# ============================================================
+# ALIASES (SYSTEM)
+# ============================================================
+alias_maps = hash:/etc/aliases
+alias_database = hash:/etc/aliases
+local_transport = error:local delivery disabled
+home_mailbox =
+mailbox_command =
+
+# Disable SMTPUTF8
+smtputf8_enable = no

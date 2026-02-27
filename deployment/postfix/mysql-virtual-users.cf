@@ -1,0 +1,5 @@
+user = mailuser
+password = CHANGE_ME_DB_PASSWORD
+hosts = 127.0.0.1
+dbname = mailserver
+query = SELECT CONCAT('/var/mail/vhosts/', d.name, '/', SUBSTRING_INDEX(u.email, '@', 1), '/Maildir') FROM virtual_users u JOIN virtual_domains d ON u.domain_id = d.id WHERE u.email='%s';
