@@ -76,5 +76,9 @@ containerd/
 # Source bundles
 source-bundles/
 
+# Separate projects
+dexeq/
+botserver/
+
 # Private TODO
 TODO.md
