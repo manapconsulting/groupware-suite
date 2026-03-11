@@ -7,46 +7,70 @@
 #               (yes)   (yes)   (yes)   (never) (100)
 # ==========================================================================
 
-# SMTP on port 25 (for receiving mail)
-smtp      inet  n       -       n       -       -       smtpd
+# -----------------------------------------------------------------------
+# SMTP Port 25 - Incoming mail via Postscreen (bot filter)
+# Postscreen pre-screens connections before passing to smtpd
+# -----------------------------------------------------------------------
+smtp      inet  n - n - 1  postscreen
+smtpd     pass  - - n - -  smtpd
+dnsblog   unix  - - n - 0  dnsblog
+tlsproxy  unix  - - n - 0  tlsproxy
 
-# Submission on port 587 (for clients sending mail with auth)
-submission     inet  n       -       n       -       -       smtpd
-      -o syslog_name=postfix/submission
-      -o smtpd_sasl_auth_enable=yes
-      -o smtpd_recipient_restrictions=permit_sasl_authenticated,reject
-      -o milter_macro_daemon_name=ORIGINATING
+# -----------------------------------------------------------------------
+# Submission Port 587 - Authenticated client sending (STARTTLS required)
+# -----------------------------------------------------------------------
+submission inet n - n - - smtpd
+    -o syslog_name=postfix/submission
+    -o smtpd_tls_security_level=encrypt
+    -o smtpd_sasl_auth_enable=yes
+    -o smtpd_sasl_security_options=noanonymous
+    -o smtpd_client_restrictions=permit_sasl_authenticated,reject
+    -o smtpd_helo_restrictions=
+    -o smtpd_sender_restrictions=reject_sender_login_mismatch,permit_sasl_authenticated,reject
+    -o smtpd_recipient_restrictions=permit_sasl_authenticated,reject
+    -o milter_macro_daemon_name=ORIGINATING
 
-# SMTPS on port 465 (secure SMTP with TLS)
-smtps     inet  n       -       n       -       -       smtpd
-      -o syslog_name=postfix/smtps
-      -o smtpd_sasl_auth_enable=yes
-      -o smtpd_recipient_restrictions=permit_sasl_authenticated,reject
-      -o milter_macro_daemon_name=ORIGINATING
+# -----------------------------------------------------------------------
+# SMTPS Port 465 - Authenticated client sending (SSL/TLS wrapper)
+# -----------------------------------------------------------------------
+smtps     inet  n - n - - smtpd
+    -o syslog_name=postfix/smtps
+    -o smtpd_tls_wrappermode=yes
+    -o smtpd_tls_security_level=encrypt
+    -o smtpd_sasl_auth_enable=yes
+    -o smtpd_sasl_security_options=noanonymous
+    -o smtpd_client_restrictions=permit_sasl_authenticated,reject
+    -o smtpd_helo_restrictions=
+    -o smtpd_sender_restrictions=reject_sender_login_mismatch,permit_sasl_authenticated,reject
+    -o smtpd_recipient_restrictions=permit_sasl_authenticated,reject
+    -o milter_macro_daemon_name=ORIGINATING
 
-pickup    unix  n       -       n       60      1       pickup
-cleanup   unix  n       -       n       -       0       cleanup
-qmgr      unix  n       -       n       300     1       qmgr
-tlsmgr    unix  -       -       n       1000?   1       tlsmgr
-rewrite   unix  -       -       n       -       -       trivial-rewrite
-bounce    unix  -       -       n       -       0       bounce
-defer     unix  -       -       n       -       0       bounce
-trace     unix  -       -       n       -       0       bounce
-verify    unix  -       -       n       -       1       verify
-flush     unix  n       -       n       1000?   0       flush
-proxymap  unix  -       -       n       -       -       proxymap
-proxywrite unix -       -       n       -       1       proxymap
-smtp      unix  -       -       n       -       -       smtp
-relay     unix  -       -       n       -       -       smtp
-showq     unix  n       -       n       -       -       showq
-error     unix  -       -       n       -       -       error
-retry     unix  -       -       n       -       -       error
-discard   unix  -       -       n       -       -       discard
-local     unix  -       n       n       -       -       local
-virtual   unix  -       n       n       -       -       virtual
-lmtp      unix  -       -       n       -       -       lmtp
-anvil     unix  -       -       n       -       1       anvil
-scache    unix  -       -       n       -       1       scache
+# -----------------------------------------------------------------------
+# Internal Postfix services
+# -----------------------------------------------------------------------
+pickup    unix  n - n  60     1  pickup
+cleanup   unix  n - n  -      0  cleanup
+qmgr      unix  n - n  300    1  qmgr
+tlsmgr    unix  - - n  1000?  1  tlsmgr
+rewrite   unix  - - n  -      -  trivial-rewrite
+bounce    unix  - - n  -      0  bounce
+defer     unix  - - n  -      0  bounce
+trace     unix  - - n  -      0  bounce
+verify    unix  - - n  -      1  verify
+flush     unix  n - n  1000?  0  flush
+proxymap  unix  - - n  -      -  proxymap
+proxywrite unix - - n  -      1  proxymap
+smtp      unix  - - n  -      -  smtp
+relay     unix  - - n  -      -  smtp
+showq     unix  n - n  -      -  showq
+error     unix  - - n  -      -  error
+retry     unix  - - n  -      -  error
+discard   unix  - - n  -      -  discard
+local     unix  - n n  -      -  local
+virtual   unix  - n n  -      -  virtual
+lmtp      unix  - - n  -      -  lmtp
+anvil     unix  - - n  -      1  anvil
+scache    unix  - - n  -      1  scache
 
 # Dovecot LMTP for local delivery
-dovecot   unix  -       n       n       -       -       lmtp
+dovecot   unix  - n n  -      -  lmtp

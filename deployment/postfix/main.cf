@@ -2,10 +2,12 @@
 # BASIC
 # ============================================================
 compatibility_level = 2
-smtpd_banner = $myhostname ESMTP $mail_name (Debian/GNU)
 biff = no
 append_dot_mydomain = no
 readme_directory = no
+
+# Hide software version from banner (hardening)
+smtpd_banner = $myhostname ESMTP
 
 myhostname = CHANGE_ME_HOSTNAME
 myorigin = /etc/mailname
@@ -19,85 +21,170 @@ recipient_delimiter = +
 mynetworks = 127.0.0.0/8 [::1]/128
 relayhost =
 
-# Virtual setup - mydestination should be minimal
 mydestination = localhost, mail.CHANGE_ME_HOSTNAME
 
 # ============================================================
 # VIRTUAL DOMAINS / USERS
 # ============================================================
 virtual_mailbox_domains = mysql:/etc/postfix/mysql-virtual-domains.cf
-virtual_mailbox_maps = mysql:/etc/postfix/mysql-virtual-users.cf
-virtual_alias_maps = mysql:/etc/postfix/mysql-virtual-aliases.cf
+virtual_mailbox_maps    = mysql:/etc/postfix/mysql-virtual-users.cf
+virtual_alias_maps      = mysql:/etc/postfix/mysql-virtual-aliases.cf
 
-virtual_transport = lmtp:unix:private/dovecot-lmtp
-
+virtual_transport    = lmtp:unix:private/dovecot-lmtp
 virtual_mailbox_base = /var/mail/vhosts
-virtual_minimum_uid = 5000
-virtual_uid_maps = static:5000
-virtual_gid_maps = static:5000
+virtual_minimum_uid  = 5000
+virtual_uid_maps     = static:5000
+virtual_gid_maps     = static:5000
 
 # ============================================================
 # SASL (DOVECOT)
 # ============================================================
-smtpd_sasl_type = dovecot
-smtpd_sasl_path = private/auth
-smtpd_sasl_auth_enable = yes
-smtpd_sasl_security_options = noanonymous
-broken_sasl_auth_clients = yes
-
-smtpd_recipient_restrictions =
-    permit_mynetworks,
-    permit_sasl_authenticated,
-    reject_unauth_destination
+smtpd_sasl_type             = dovecot
+smtpd_sasl_path             = private/auth
+smtpd_sasl_auth_enable      = yes
+smtpd_sasl_security_options     = noanonymous, noplaintext
+smtpd_sasl_tls_security_options = noanonymous
+broken_sasl_auth_clients        = yes
 
 # ============================================================
-# TLS
+# TLS - HARDENED
 # ============================================================
 smtpd_use_tls = yes
-smtp_tls_security_level = may
-smtpd_tls_security_level = may
-smtp_tls_note_starttls_offer = yes
-smtpd_tls_loglevel = 1
 
-smtpd_tls_key_file = /etc/letsencrypt/live/CHANGE_ME_HOSTNAME/privkey.pem
+# Port 25: opportunistic TLS (other MTAs may not support it)
+smtpd_tls_security_level = may
+smtp_tls_security_level  = may
+smtp_tls_note_starttls_offer = yes
+
+# Minimum TLS 1.2 - disable deprecated protocols
+smtpd_tls_protocols           = !SSLv2, !SSLv3, !TLSv1, !TLSv1.1
+smtpd_tls_mandatory_protocols = !SSLv2, !SSLv3, !TLSv1, !TLSv1.1
+smtp_tls_protocols            = !SSLv2, !SSLv3, !TLSv1, !TLSv1.1
+smtp_tls_mandatory_protocols  = !SSLv2, !SSLv3, !TLSv1, !TLSv1.1
+
+# Strong cipher suites - disable weak/broken ciphers
+smtpd_tls_ciphers           = high
+smtpd_tls_mandatory_ciphers = high
+smtp_tls_ciphers            = high
+smtp_tls_mandatory_ciphers  = high
+smtpd_tls_exclude_ciphers   = aNULL, eNULL, EXPORT, DES, 3DES, RC2, RC4, MD5, PSK, SRP, DSS, SEED
+
+# Certificate files
+smtpd_tls_key_file  = /etc/letsencrypt/live/CHANGE_ME_HOSTNAME/privkey.pem
 smtpd_tls_cert_file = /etc/letsencrypt/live/CHANGE_ME_HOSTNAME/fullchain.pem
 
-# SNI (Server Name Indication) - Multi-domain certificates
+# SNI - multi-domain certificates
 tls_server_sni_maps = hash:/etc/postfix/sni_maps
 
-smtpd_tls_received_header = yes
-smtpd_tls_session_cache_timeout = 3600s
-
-tls_random_source = dev:/dev/urandom
-
+smtpd_tls_received_header        = yes
+smtpd_tls_loglevel               = 1
+smtpd_tls_session_cache_timeout  = 3600s
 smtpd_tls_session_cache_database = btree:${data_directory}/smtpd_scache
-smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
+smtp_tls_session_cache_database  = btree:${data_directory}/smtp_scache
+tls_random_source                = dev:/dev/urandom
 
 # ============================================================
-# LIMITS
+# HELO/EHLO RESTRICTIONS
 # ============================================================
-message_size_limit = 150000000
+smtpd_helo_required     = yes
+smtpd_helo_restrictions =
+    permit_mynetworks,
+    reject_non_fqdn_helo_hostname,
+    reject_invalid_helo_hostname,
+    permit
+
+# ============================================================
+# CLIENT RESTRICTIONS
+# ============================================================
+smtpd_client_restrictions =
+    permit_mynetworks,
+    reject_unknown_reverse_client_hostname,
+    permit
+
+# ============================================================
+# SENDER RESTRICTIONS
+# ============================================================
+smtpd_sender_login_maps   = mysql:/etc/postfix/mysql-sender-login-maps.cf
+smtpd_sender_restrictions =
+    reject_non_fqdn_sender,
+    reject_unknown_sender_domain,
+    reject_sender_login_mismatch,
+    permit_sasl_authenticated,
+    permit_mynetworks,
+    reject
+
+# ============================================================
+# RECIPIENT RESTRICTIONS
+# ============================================================
+smtpd_recipient_restrictions =
+    reject_unauth_pipelining,
+    reject_non_fqdn_recipient,
+    reject_unknown_recipient_domain,
+    permit_mynetworks,
+    permit_sasl_authenticated,
+    reject_unauth_destination,
+    reject_rbl_client zen.spamhaus.org,
+    reject_rbl_client bl.spamcop.net,
+    reject_rbl_client b.barracudacentral.org
+
+smtpd_recipient_limit = 50
+
+# ============================================================
+# DATA RESTRICTIONS
+# ============================================================
+smtpd_data_restrictions = reject_unauth_pipelining
+
+# ============================================================
+# RATE LIMITING & DOS PROTECTION
+# ============================================================
+smtpd_client_connection_rate_limit      = 10
+smtpd_client_message_rate_limit         = 20
+smtpd_client_recipient_rate_limit       = 50
+smtpd_client_connection_count_limit     = 10
+smtpd_client_new_tls_session_rate_limit = 10
+
+smtpd_error_sleep_time = 5s
+smtpd_soft_error_limit = 5
+smtpd_hard_error_limit = 10
+
+# ============================================================
+# POSTSCREEN (BOT FILTER - port 25 only)
+# Requires master.cf changes - see master.cf comments
+# ============================================================
+postscreen_access_list               = permit_mynetworks
+postscreen_blacklist_action          = drop
+postscreen_greet_action              = enforce
+postscreen_dnsbl_action              = enforce
+postscreen_dnsbl_threshold           = 3
+postscreen_dnsbl_ttl                 = 1h
+postscreen_dnsbl_whitelist_threshold = -1
+postscreen_greet_banner              = $smtpd_banner
+postscreen_dnsbl_sites               =
+    zen.spamhaus.org*3
+    bl.spamcop.net*2
+    b.barracudacentral.org*2
+
+# ============================================================
+# MILTERS (DKIM + SPAM)
+# ============================================================
+milter_default_action = accept
+milter_connect_macros = i j {daemon_name} v {if_name} _
+# Uncomment after installing opendkim / spamassassin:
+# smtpd_milters     = unix:/run/opendkim/opendkim.sock, unix:spamass/spamass.sock
+# non_smtpd_milters = $smtpd_milters
+
+# ============================================================
+# SIZE LIMITS
+# ============================================================
+message_size_limit = 50000000
 mailbox_size_limit = 1000000000
 
 # ============================================================
-# SPAM/SECURITY (Optional - configure if needed)
+# SYSTEM
 # ============================================================
-# milter_default_action = accept
-# smtpd_milters = unix:/run/opendkim/opendkim.sock, unix:spamass/spamass.sock
-# non_smtpd_milters = $smtpd_milters
-
-# Sender login checks
-smtpd_sender_restrictions = reject_sender_login_mismatch, permit_sasl_authenticated, permit_mynetworks
-smtpd_sender_login_maps = mysql:/etc/postfix/mysql-sender-login-maps.cf
-
-# ============================================================
-# ALIASES (SYSTEM)
-# ============================================================
-alias_maps = hash:/etc/aliases
-alias_database = hash:/etc/aliases
+alias_maps      = hash:/etc/aliases
+alias_database  = hash:/etc/aliases
 local_transport = error:local delivery disabled
-home_mailbox =
+home_mailbox    =
 mailbox_command =
-
-# Disable SMTPUTF8
 smtputf8_enable = no
