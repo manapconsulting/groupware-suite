@@ -2,7 +2,7 @@
 # Mail Server Hardening Script
 # Run after install.sh to apply security hardening
 
-set -e
+set -euo pipefail
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -94,23 +94,30 @@ ok "Dovecot SSL hardened (TLS 1.2+, strong ciphers)"
 # -----------------------------------------------------------
 step 6 "Installing and configuring SpamAssassin"
 apt-get install -y spamassassin spamc -q
-systemctl enable spamassassin
-systemctl start spamassassin
+# Debian 12 uses 'spamd', older systems use 'spamassassin'
+SA_SERVICE="spamd"
+systemctl list-unit-files --type=service 2>/dev/null | grep -q "^spamd.service" || SA_SERVICE="spamassassin"
+systemctl enable "$SA_SERVICE"
+systemctl start "$SA_SERVICE"
 # Update rules
 sa-update 2>/dev/null || true
 # Daily rule updates
 cat > /etc/cron.daily/sa-update << 'EOF'
 #!/bin/bash
-sa-update && systemctl reload spamassassin 2>/dev/null
+SA_SERVICE="spamd"
+systemctl list-unit-files --type=service 2>/dev/null | grep -q "^spamd.service" || SA_SERVICE="spamassassin"
+sa-update && systemctl reload "$SA_SERVICE" 2>/dev/null
 EOF
 chmod +x /etc/cron.daily/sa-update
-ok "SpamAssassin installed and enabled"
+ok "SpamAssassin installed and enabled (service: $SA_SERVICE)"
 
 # -----------------------------------------------------------
 step 7 "Securing file permissions"
-# Mail directories
-chown -R vmail:vmail /var/mail/vhosts
-chmod -R 770 /var/mail/vhosts
+# Mail directories (only if they exist)
+if [ -d /var/mail/vhosts ]; then
+  chown -R vmail:vmail /var/mail/vhosts
+  chmod -R 770 /var/mail/vhosts
+fi
 
 # Postfix MySQL files
 chmod 640 /etc/postfix/mysql-*.cf
