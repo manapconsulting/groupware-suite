@@ -9,11 +9,13 @@ type Domain struct {
 }
 
 type User struct {
-	ID          int    `json:"id"`
-	DomainID    int    `json:"domain_id"`
-	Email       string `json:"email"`
-	Password    string `json:"password,omitempty"`
-	Domain      string `json:"domain,omitempty"`
+	ID       int    `json:"id"`
+	DomainID int    `json:"domain_id"`
+	Email    string `json:"email"`
+	Password string `json:"password,omitempty"`
+	Domain   string `json:"domain,omitempty"`
+	// Quota is the mailbox size limit in megabytes; 0 means unlimited.
+	Quota       int    `json:"quota"`
 	NotifyEmail string `json:"notify_email,omitempty"`
 }
 

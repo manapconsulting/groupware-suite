@@ -14,6 +14,7 @@ password_query = \
 user_query = \
   SELECT 5000 AS uid, 5000 AS gid, \
   '/var/mail/vhosts/%d/%n' AS home, \
-  'maildir:/var/mail/vhosts/%d/%n/Maildir' AS mail \
+  'maildir:/var/mail/vhosts/%d/%n/Maildir' AS mail, \
+  CONCAT('*:storage=', IF(quota > 0, CONCAT(quota, 'M'), '0')) AS quota_rule \
   FROM virtual_users \
   WHERE email='%u';

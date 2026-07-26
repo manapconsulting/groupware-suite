@@ -410,8 +410,11 @@ func cleanupTestDomain(t *testing.T, name string) {
 }
 
 func createTestUserDirect(t *testing.T, domainID int, email, password string) {
-	hashedPassword := hashPassword(password)
-	_, err := db.Exec("INSERT INTO virtual_users (domain_id, email, password) VALUES (?, ?, ?)", domainID, email, hashedPassword)
+	hashedPassword, err := hashPassword(password)
+	if err != nil {
+		t.Fatalf("failed to hash test password: %v", err)
+	}
+	_, err = db.Exec("INSERT INTO virtual_users (domain_id, email, password) VALUES (?, ?, ?)", domainID, email, hashedPassword)
 	if err != nil {
 		t.Fatalf("failed to create test user: %v", err)
 	}
