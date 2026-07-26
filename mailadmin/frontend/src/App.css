@@ -1740,3 +1740,140 @@ td button {
   margin-bottom: 20px;
   font-size: 14px;
 }
+
+/* ---- Domain API keys panel ---- */
+.api-keys-panel {
+  padding: 8px 0;
+}
+
+.api-keys-intro p {
+  color: #555;
+  font-size: 14px;
+  line-height: 1.5;
+  background: #f7f9fc;
+  border: 1px solid #e3e8f0;
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+
+.api-keys-intro code,
+.api-keys-table code,
+.api-key-secret code {
+  background: #eef1f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 13px;
+}
+
+.api-keys-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 18px 0 10px;
+}
+
+.api-key-created {
+  background: #fff8e1;
+  border: 1px solid #f0d98c;
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.api-key-secret {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+  flex-wrap: wrap;
+}
+
+.api-key-secret code {
+  flex: 1;
+  min-width: 240px;
+  word-break: break-all;
+  background: #fff;
+  border: 1px dashed #d0a800;
+  padding: 8px 10px;
+}
+
+.api-key-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #f7f9fc;
+  border: 1px solid #e3e8f0;
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.api-key-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+}
+
+.api-key-form input,
+.api-key-form textarea {
+  padding: 8px 10px;
+  border: 1px solid #ccd3df;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 400;
+  font-family: inherit;
+}
+
+.api-key-form textarea {
+  resize: vertical;
+  font-family: monospace;
+}
+
+.api-key-form .form-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.api-keys-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+.api-keys-table th,
+.api-keys-table td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid #eceff4;
+  font-size: 13px;
+  vertical-align: top;
+}
+
+.api-keys-table th {
+  color: #667;
+  font-weight: 600;
+}
+
+.api-keys-table tr.disabled-row {
+  opacity: 0.55;
+}
+
+.source-chip {
+  display: inline-block;
+  background: #eef1f6;
+  border-radius: 12px;
+  padding: 2px 10px;
+  margin: 2px 4px 2px 0;
+  font-size: 12px;
+  font-family: monospace;
+}
+
+.api-keys-table .row-actions {
+  display: flex;
+  gap: 6px;
+  white-space: nowrap;
+}

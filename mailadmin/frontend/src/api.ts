@@ -76,6 +76,40 @@ export const domains = {
   delete: (id: number) => api.delete<APIResponse<void>>(`/domains/${id}`),
 };
 
+export interface DomainAPIKey {
+  id: number;
+  domain_id: number;
+  domain?: string;
+  name: string;
+  key_prefix: string;
+  allowed_sources: string[];
+  enabled: boolean;
+  last_used_at?: string;
+  created_at?: string;
+}
+
+// Returned only once when a key is created; `key` is the plaintext secret.
+export interface DomainAPIKeyCreated extends DomainAPIKey {
+  key: string;
+}
+
+export interface APIKeyInput {
+  name: string;
+  allowed_sources: string[];
+  enabled?: boolean;
+}
+
+export const apiKeys = {
+  list: (domainId: number) =>
+    api.get<APIResponse<DomainAPIKey[]>>(`/domains/${domainId}/api-keys`),
+  create: (domainId: number, data: APIKeyInput) =>
+    api.post<APIResponse<DomainAPIKeyCreated>>(`/domains/${domainId}/api-keys`, data),
+  update: (domainId: number, keyId: number, data: APIKeyInput) =>
+    api.put<APIResponse<void>>(`/domains/${domainId}/api-keys/${keyId}`, data),
+  delete: (domainId: number, keyId: number) =>
+    api.delete<APIResponse<void>>(`/domains/${domainId}/api-keys/${keyId}`),
+};
+
 export const users = {
   list: () => api.get<APIResponse<User[]>>('/users'),
   create: (user: User) => api.post<APIResponse<User>>('/users', user),

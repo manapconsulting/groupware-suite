@@ -19,6 +19,36 @@ type User struct {
 	NotifyEmail string `json:"notify_email,omitempty"`
 }
 
+// DomainAPIKey is a per-domain credential that may manage only its own
+// domain's mailboxes, and only from an allowlisted source. The key hash is
+// never exposed through the API; AllowedSources holds literal IPs, CIDR blocks,
+// or FQDNs (resolved at request time).
+type DomainAPIKey struct {
+	ID             int      `json:"id"`
+	DomainID       int      `json:"domain_id"`
+	Domain         string   `json:"domain,omitempty"`
+	Name           string   `json:"name"`
+	KeyPrefix      string   `json:"key_prefix"`
+	AllowedSources []string `json:"allowed_sources"`
+	Enabled        bool     `json:"enabled"`
+	LastUsedAt     string   `json:"last_used_at,omitempty"`
+	CreatedAt      string   `json:"created_at,omitempty"`
+}
+
+// APIKeyCreateRequest is the admin-supplied payload when minting a key.
+type APIKeyCreateRequest struct {
+	Name           string   `json:"name"`
+	AllowedSources []string `json:"allowed_sources"`
+	Enabled        *bool    `json:"enabled,omitempty"`
+}
+
+// APIKeyCreateResponse carries the one-time plaintext key. The plaintext is
+// never stored and cannot be retrieved again after this response.
+type APIKeyCreateResponse struct {
+	DomainAPIKey
+	Key string `json:"key"`
+}
+
 type Alias struct {
 	ID          int    `json:"id"`
 	DomainID    int    `json:"domain_id"`

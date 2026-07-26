@@ -254,6 +254,33 @@ CREATE TABLE `virtual_domains` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `domain_api_keys`
+--
+-- Per-domain API keys usable only from an allowlisted source (IP/CIDR/FQDN).
+-- Only the SHA-256 hash of the key is stored. See migration 002.
+--
+
+DROP TABLE IF EXISTS `domain_api_keys`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `domain_api_keys` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `domain_id` int(11) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `key_prefix` varchar(16) NOT NULL,
+  `key_hash` char(64) NOT NULL,
+  `allowed_sources` text NOT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT 1,
+  `last_used_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_key_hash` (`key_hash`),
+  KEY `domain_id` (`domain_id`),
+  CONSTRAINT `domain_api_keys_ibfk_1` FOREIGN KEY (`domain_id`) REFERENCES `virtual_domains` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `virtual_users`
 --
 

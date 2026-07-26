@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { domains, dnsCheck, clientSetup } from '../api';
 import type { Domain, DomainCheckResponse, ClientSetupInfo } from '../api';
+import DomainApiKeys from './DomainApiKeys';
 
 function DomainsTab() {
   const [domainList, setDomainList] = useState<Domain[]>([]);
@@ -12,7 +13,7 @@ function DomainsTab() {
   const [checkResults, setCheckResults] = useState<DomainCheckResponse | null>(null);
   const [setupInfo, setSetupInfo] = useState<ClientSetupInfo | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dns' | 'setup'>('dns');
+  const [activeTab, setActiveTab] = useState<'dns' | 'setup' | 'apikeys'>('dns');
   const [expandedClient, setExpandedClient] = useState<string | null>(null);
 
   const fetchDomains = async () => {
@@ -342,6 +343,12 @@ function DomainsTab() {
                 >
                   Istemci Kurulumu
                 </button>
+                <button
+                  className={activeTab === 'apikeys' ? 'active' : ''}
+                  onClick={() => setActiveTab('apikeys')}
+                >
+                  API Anahtarlari
+                </button>
               </div>
 
               {activeTab === 'dns' && (
@@ -507,6 +514,10 @@ function DomainsTab() {
                     </p>
                   </div>
                 </div>
+              )}
+
+              {activeTab === 'apikeys' && (
+                <DomainApiKeys domain={selectedDomain} />
               )}
             </>
           ) : (

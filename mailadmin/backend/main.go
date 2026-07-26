@@ -33,6 +33,12 @@ func main() {
 	api.HandleFunc("/domains/{id}", handlers.UpdateDomain).Methods("PUT")
 	api.HandleFunc("/domains/{id}", handlers.DeleteDomain).Methods("DELETE")
 
+	// Per-domain API keys (admin-managed)
+	api.HandleFunc("/domains/{id}/api-keys", handlers.GetDomainAPIKeys).Methods("GET")
+	api.HandleFunc("/domains/{id}/api-keys", handlers.CreateDomainAPIKey).Methods("POST")
+	api.HandleFunc("/domains/{id}/api-keys/{keyId}", handlers.UpdateDomainAPIKey).Methods("PUT")
+	api.HandleFunc("/domains/{id}/api-keys/{keyId}", handlers.DeleteDomainAPIKey).Methods("DELETE")
+
 	// DNS Checks
 	api.HandleFunc("/dns-check/{domain}", handlers.CheckDomainDNS).Methods("GET")
 	api.HandleFunc("/dkim-key/{domain}", handlers.GetDKIMKey).Methods("GET")
@@ -72,11 +78,22 @@ func main() {
 	api.HandleFunc("/ssl/configure", handlers.ConfigureSSL).Methods("POST")
 	api.HandleFunc("/ssl/webmail", handlers.ConfigureNginxWebmail).Methods("POST")
 
+	// Provisioning routes: authenticated by a per-domain API key
+	// (X-API-Key header) and restricted to the key's allowlisted source.
+	// Every operation is scoped to the key's own domain.
+	provision := r.PathPrefix("/api/provision").Subrouter()
+	provision.Use(handlers.APIKeyMiddleware)
+	provision.HandleFunc("/users", handlers.ProvisionListUsers).Methods("GET")
+	provision.HandleFunc("/users", handlers.ProvisionCreateUser).Methods("POST")
+	provision.HandleFunc("/users/{id}", handlers.ProvisionUpdateUser).Methods("PUT")
+	provision.HandleFunc("/users/{id}", handlers.ProvisionDeleteUser).Methods("DELETE")
+	provision.HandleFunc("/users/{id}/password", handlers.ProvisionChangePassword).Methods("PUT")
+
 	// CORS
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Authorization", "Content-Type"},
+		AllowedHeaders:   []string{"Authorization", "Content-Type", "X-API-Key"},
 		AllowCredentials: true,
 	})
 

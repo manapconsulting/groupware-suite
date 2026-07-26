@@ -120,45 +120,15 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Keep plain password for email before hashing
+	// Keep plain password for the welcome email before it is hashed away.
 	plainPassword := user.Password
-	hashedPassword, err := hashPassword(user.Password)
+
+	id, status, err := insertMailbox(&user)
 	if err != nil {
-		respondJSON(w, http.StatusInternalServerError, models.APIResponse{Success: false, Message: "Failed to hash password: " + err.Error()})
+		respondJSON(w, status, models.APIResponse{Success: false, Message: err.Error()})
 		return
 	}
-
-	result, err := db.Exec(
-		"INSERT INTO virtual_users (domain_id, email, password, quota) VALUES (?, ?, ?, ?)",
-		user.DomainID, user.Email, hashedPassword, user.Quota,
-	)
-	if err != nil {
-		var mysqlErr *mysql.MySQLError
-		if errors.As(err, &mysqlErr) && mysqlErr.Number == mysqlErrDupEntry {
-			respondJSON(w, http.StatusConflict, models.APIResponse{Success: false, Message: "Email address already exists"})
-			return
-		}
-		respondJSON(w, http.StatusInternalServerError, models.APIResponse{Success: false, Message: err.Error()})
-		return
-	}
-
-	id, _ := result.LastInsertId()
-	user.ID = int(id)
-
-	// Create the mailbox on disk so delivery works before the first login
-	if err := CreateMaildir(user.Email); err != nil {
-		// Unwind: an account without a mailbox would bounce mail silently
-		db.Exec("DELETE FROM virtual_users WHERE id = ?", id)
-		if rmErr := RemoveMaildir(user.Email); rmErr != nil {
-			println("Failed to clean up maildir:", rmErr.Error())
-		}
-		respondJSON(w, http.StatusInternalServerError, models.APIResponse{Success: false, Message: "Failed to create maildir: " + err.Error()})
-		return
-	}
-
-	// Create default calendar and addressbook for groupware
-	db.Exec("INSERT INTO calendars (user_id, name, ctag) VALUES (?, 'Calendar', MD5(NOW()))", id)
-	db.Exec("INSERT INTO addressbooks (user_id, name, ctag) VALUES (?, 'Contacts', MD5(NOW()))", id)
+	user.ID = id
 
 	// Send welcome email if notify_email is provided
 	if user.NotifyEmail != "" {
@@ -183,6 +153,49 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	user.NotifyEmail = ""
 
 	respondJSON(w, http.StatusCreated, models.APIResponse{Success: true, Data: user})
+}
+
+// insertMailbox performs the shared work of creating a mailbox: it inserts the
+// virtual_users row, provisions the on-disk Maildir (unwinding the row if that
+// fails), and seeds the groupware calendar/addressbook. Callers must have
+// already validated the address and confirmed user.DomainID matches its domain.
+// On failure it returns an HTTP status to relay together with the error.
+func insertMailbox(user *models.User) (int, int, error) {
+	hashedPassword, err := hashPassword(user.Password)
+	if err != nil {
+		return 0, http.StatusInternalServerError, errors.New("Failed to hash password: " + err.Error())
+	}
+
+	result, err := db.Exec(
+		"INSERT INTO virtual_users (domain_id, email, password, quota) VALUES (?, ?, ?, ?)",
+		user.DomainID, user.Email, hashedPassword, user.Quota,
+	)
+	if err != nil {
+		var mysqlErr *mysql.MySQLError
+		if errors.As(err, &mysqlErr) && mysqlErr.Number == mysqlErrDupEntry {
+			return 0, http.StatusConflict, errors.New("Email address already exists")
+		}
+		return 0, http.StatusInternalServerError, err
+	}
+
+	id64, _ := result.LastInsertId()
+	id := int(id64)
+
+	// Create the mailbox on disk so delivery works before the first login.
+	if err := CreateMaildir(user.Email); err != nil {
+		// Unwind: an account without a mailbox would bounce mail silently.
+		db.Exec("DELETE FROM virtual_users WHERE id = ?", id)
+		if rmErr := RemoveMaildir(user.Email); rmErr != nil {
+			println("Failed to clean up maildir:", rmErr.Error())
+		}
+		return 0, http.StatusInternalServerError, errors.New("Failed to create maildir: " + err.Error())
+	}
+
+	// Default calendar and addressbook for groupware.
+	db.Exec("INSERT INTO calendars (user_id, name, ctag) VALUES (?, 'Calendar', MD5(NOW()))", id)
+	db.Exec("INSERT INTO addressbooks (user_id, name, ctag) VALUES (?, 'Contacts', MD5(NOW()))", id)
+
+	return id, http.StatusCreated, nil
 }
 
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
